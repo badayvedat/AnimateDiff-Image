@@ -30,7 +30,8 @@ from transformers import CLIPTextModel, CLIPTokenizer
 from animatediff.data.dataset import WebVid10M
 from animatediff.models.unet import UNet3DConditionModel
 from animatediff.pipelines.pipeline_animation import AnimationPipeline
-from animatediff.utils.util import save_videos_grid, zero_rank_print
+from animatediff.utils.image_utils import save_videos_grid
+from animatediff.utils.model_utils import zero_rank_print
 
 
 def init_dist(launcher="slurm", backend="nccl", port=29500, **kwargs):
