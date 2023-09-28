@@ -12,8 +12,8 @@ from transformers import CLIPTextModel, CLIPTokenizer
 
 from animatediff.models.unet import UNet3DConditionModel
 from animatediff.pipelines.pipeline_animation import AnimationPipeline
-from animatediff.utils.model_utils import load_weights
 from animatediff.utils.image_utils import save_videos_grid
+from animatediff.utils.model_utils import load_weights
 
 
 def main(args):
