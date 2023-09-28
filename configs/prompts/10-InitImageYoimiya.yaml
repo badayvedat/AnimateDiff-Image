@@ -1,17 +1,25 @@
 InitImageYoimiya:
-  base: "models/DreamBooth_LoRA/AnythingV5_v5PrtRE.safetensors"
-  path: "models/DreamBooth_LoRA/genshin_impact_yoimiya.safetensors"
-  additional_networks: 
-    - "models/DreamBooth_LoRA/LineLine2D.safetensors : 0.7"
+  dreambooth_path: "models/DreamBooth_LoRA/AnythingV5_v5PrtRE.safetensors"
+  lora_model_path: 
+
   init_image: "configs/prompts/yoimiya-init.jpg"
+
+  lora_configs:
+    - path: "models/DreamBooth_LoRA/genshin_impact_yoimiya.safetensors"
+      alpha: 0.8
+    - path: "models/DreamBooth_LoRA/LineLine2D.safetensors"
+      alpha: 0.7
 
   motion_module:
     - "models/Motion_Module/mm_sd_v14.ckpt"
-    - "models/Motion_Module/mm_sd_v15.ckpt"
+    - "models/Motion_Module/mm_sd_v15_v2.ckpt"
+  
+  motion_module_lora_configs:
+    - path:  "models/MotionLoRA/v2_lora_ZoomIn.ckpt"
+      alpha: 1.0
 
   steps:          25
   guidance_scale: 7.5
-  lora_alpha: 0.8
 
   prompt:
     - "1girl, yoimiya (genshin impact), origen, line, comet, wink, Masterpiece ，BestQuality ，UltraDetailed"

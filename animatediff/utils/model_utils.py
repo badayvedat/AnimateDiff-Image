@@ -113,9 +113,7 @@ def load_weights(
     motion_module_lora_configs=[],
     # image layers
     dreambooth_model_path="",
-    lora_model_path="",
-    lora_alpha=0.8,
-    additional_networks=[],
+    lora_configs=[],
 ):
     # 1.1 motion module
     unet_state_dict = {}
@@ -169,17 +167,24 @@ def load_weights(
         )
         del dreambooth_state_dict
 
-    if lora_model_path != "":
-        print(f"load lora model from {lora_model_path}")
-        assert lora_model_path.endswith(".safetensors")
+    for lora_config in lora_configs:
+        # TODO: merge them instead of loading one by one
+        lora_path = lora_config["path"]
+        lora_alpha = lora_config["alpha"]
+
+        print(f"Load LoRA model from {lora_path}")
+
+        assert lora_path.endswith(".safetensors")
+
         lora_state_dict = {}
-        with safe_open(lora_model_path, framework="pt", device="cpu") as f:
+        with safe_open(lora_path, framework="pt", device="cpu") as f:
             for key in f.keys():
                 lora_state_dict[key] = f.get_tensor(key)
 
         animation_pipeline = convert_lora(
             animation_pipeline, lora_state_dict, alpha=lora_alpha
         )
+
         del lora_state_dict
 
     for motion_module_lora_config in motion_module_lora_configs:
@@ -199,18 +204,5 @@ def load_weights(
         animation_pipeline = convert_motion_lora_ckpt_to_diffusers(
             animation_pipeline, motion_lora_state_dict, alpha
         )
-
-    # Additional networks
-    for additional_lora in additional_networks:
-        lora_path, lora_alpha = additional_lora.split(":")
-        lora_path = lora_path.strip()
-        lora_alpha = float(lora_alpha.strip())
-
-        print(f"Loading LoRA {lora_path} with weight {lora_alpha}")
-
-        state_dict = {}
-        with safe_open(lora_path, framework="pt", device="cpu") as fp:
-            for key in fp.keys():
-                state_dict[key] = fp.get_tensor(key)
 
     return animation_pipeline

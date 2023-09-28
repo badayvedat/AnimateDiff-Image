@@ -1,6 +1,5 @@
 import argparse
 import datetime
-import inspect
 import os
 import shutil
 from pathlib import Path
@@ -19,9 +18,6 @@ from animatediff.utils.model_utils import load_weights
 
 
 def main(args):
-    *_, func_args = inspect.getargvalues(inspect.currentframe())
-    func_args = dict(func_args)
-
     time_str = datetime.datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
     savedir = f"samples/{Path(args.config).stem}-{time_str}"
     os.makedirs(savedir)
@@ -84,9 +80,7 @@ def main(args):
                 ),
                 # image layers
                 dreambooth_model_path=model_config.get("dreambooth_path", ""),
-                lora_model_path=model_config.get("lora_model_path", ""),
-                lora_alpha=model_config.get("lora_alpha", 0.8),
-                additional_networks=model_config.get("additional_networks", []),
+                lora_configs=model_config.get("lora_configs", []),
             ).to("cuda")
 
             prompts = model_config.prompt
