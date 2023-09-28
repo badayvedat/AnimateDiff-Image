@@ -16,16 +16,14 @@
 
 import re
 from typing import Optional
+
 import torch
-from diffusers.schedulers import (
-    DDIMScheduler,
-    DDPMScheduler
-)
+from diffusers.schedulers import DDIMScheduler, DDPMScheduler
 from transformers import (
     CLIPImageProcessor,
     CLIPTextModel,
     CLIPVisionConfig,
-    CLIPVisionModelWithProjection
+    CLIPVisionModelWithProjection,
 )
 
 

@@ -8,7 +8,7 @@ import torchvision.transforms as transforms
 from decord import VideoReader
 from torch.utils.data.dataset import Dataset
 
-from animatediff.utils.util import zero_rank_print
+from animatediff.utils.model_utils import zero_rank_print
 
 
 class WebVid10M(Dataset):
@@ -102,7 +102,6 @@ class WebVid10M(Dataset):
 
 
 if __name__ == "__main__":
-
     dataset = WebVid10M(
         csv_path="/mnt/petrelfs/guoyuwei/projects/datasets/webvid/results_2M_val.csv",
         video_folder="/mnt/petrelfs/guoyuwei/projects/datasets/webvid/2M_val",

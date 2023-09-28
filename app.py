@@ -25,7 +25,7 @@ from animatediff.utils.convert_from_ckpt import (
     convert_ldm_vae_checkpoint,
 )
 from animatediff.utils.convert_lora_safetensor_to_diffusers import convert_lora
-from animatediff.utils.util import save_videos_grid
+from animatediff.utils.image_utils import save_videos_grid
 
 sample_idx = 0
 scheduler_dict = {

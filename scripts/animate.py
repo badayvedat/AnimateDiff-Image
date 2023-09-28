@@ -3,6 +3,7 @@ import datetime
 import inspect
 import os
 from pathlib import Path
+
 import torch
 from diffusers import AutoencoderKL, DDIMScheduler
 from diffusers.utils.import_utils import is_xformers_available
@@ -11,7 +12,8 @@ from transformers import CLIPTextModel, CLIPTokenizer
 
 from animatediff.models.unet import UNet3DConditionModel
 from animatediff.pipelines.pipeline_animation import AnimationPipeline
-from animatediff.utils.util import load_weights, save_videos_grid
+from animatediff.utils.model_utils import load_weights
+from animatediff.utils.image_utils import save_videos_grid
 
 
 def main(args):

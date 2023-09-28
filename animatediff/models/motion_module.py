@@ -1,5 +1,6 @@
 import math
 from dataclasses import dataclass
+
 import torch
 import torch.nn.functional as F
 from diffusers.models.attention import CrossAttention, FeedForward
