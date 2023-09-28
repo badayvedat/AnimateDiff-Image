@@ -121,8 +121,8 @@ def main(args):
                 print(f"current seed: {torch.initial_seed()}")
                 print(f"sampling {prompt} ...")
                 sample = pipeline(
-                    init_image,
                     prompt,
+                    init_image,
                     negative_prompt=n_prompt,
                     num_inference_steps=model_config.steps,
                     guidance_scale=model_config.guidance_scale,

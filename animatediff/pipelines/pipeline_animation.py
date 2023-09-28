@@ -352,8 +352,7 @@ class AnimationPipeline(DiffusionPipeline):
         )
 
         if init_image:
-            image = Image.open(init_image)
-            image = preprocess_image(image)
+            image = preprocess_image(init_image)
 
             supported_image_types = (torch.Tensor, Image.Image, list)
             if not isinstance(image, supported_image_types):
@@ -403,7 +402,7 @@ class AnimationPipeline(DiffusionPipeline):
                     shape, generator=generator, device=rand_device, dtype=dtype
                 ).to(device)
 
-                if init_latents:
+                if init_latents is not None:
                     for idx in range(video_length):
                         # Gradually reduce init alpha along video frames
                         init_alpha = (video_length - float(idx)) / video_length
@@ -423,7 +422,7 @@ class AnimationPipeline(DiffusionPipeline):
             latents = latents.to(device)
 
         # scale the initial noise by the standard deviation required by the scheduler
-        if not init_latents:
+        if init_latents is None:
             latents = latents * self.scheduler.init_noise_sigma
         return latents
 
@@ -431,8 +430,8 @@ class AnimationPipeline(DiffusionPipeline):
     def __call__(
         self,
         prompt: Union[str, List[str]],
-        video_length: Optional[int],
         init_image: Image.Image,
+        video_length: Optional[int],
         height: Optional[int] = None,
         width: Optional[int] = None,
         num_inference_steps: int = 50,
