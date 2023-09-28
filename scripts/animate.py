@@ -2,12 +2,14 @@ import argparse
 import datetime
 import inspect
 import os
+import shutil
 from pathlib import Path
 
 import torch
 from diffusers import AutoencoderKL, DDIMScheduler
 from diffusers.utils.import_utils import is_xformers_available
 from omegaconf import OmegaConf
+from PIL import Image
 from transformers import CLIPTextModel, CLIPTokenizer
 
 from animatediff.models.unet import UNet3DConditionModel
@@ -84,6 +86,7 @@ def main(args):
                 dreambooth_model_path=model_config.get("dreambooth_path", ""),
                 lora_model_path=model_config.get("lora_model_path", ""),
                 lora_alpha=model_config.get("lora_alpha", 0.8),
+                additional_networks=model_config.get("additional_networks", []),
             ).to("cuda")
 
             prompts = model_config.prompt
@@ -101,6 +104,9 @@ def main(args):
                 random_seeds * len(prompts) if len(random_seeds) == 1 else random_seeds
             )
 
+            init_image_path = model_config.get("init_image", None)
+            init_image = Image.open(init_image_path) if init_image_path else None
+
             config[config_key].random_seed = []
             for prompt_idx, (prompt, n_prompt, random_seed) in enumerate(
                 zip(prompts, n_prompts, random_seeds)
@@ -115,6 +121,7 @@ def main(args):
                 print(f"current seed: {torch.initial_seed()}")
                 print(f"sampling {prompt} ...")
                 sample = pipeline(
+                    init_image,
                     prompt,
                     negative_prompt=n_prompt,
                     num_inference_steps=model_config.steps,
@@ -135,6 +142,9 @@ def main(args):
     save_videos_grid(samples, f"{savedir}/sample.gif", n_rows=4)
 
     OmegaConf.save(config, f"{savedir}/config.yaml")
+
+    if init_image:
+        shutil.copy(init_image, f"{savedir}/init_image.jpg")
 
 
 if __name__ == "__main__":

@@ -77,6 +77,7 @@ def numpy_to_pil(images):
 def preprocess_image(image):
     if isinstance(image, torch.Tensor):
         return image
+
     elif isinstance(image, Image.Image):
         image = [image]
 
@@ -93,6 +94,8 @@ def preprocess_image(image):
         image = image.transpose(0, 3, 1, 2)
         image = 2.0 * image - 1.0
         image = torch.from_numpy(image)
+
     elif isinstance(image[0], torch.Tensor):
         image = torch.cat(image, dim=0)
+
     return image

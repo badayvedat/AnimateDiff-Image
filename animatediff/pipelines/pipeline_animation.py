@@ -20,8 +20,11 @@ from diffusers.schedulers import (
 from diffusers.utils import BaseOutput, deprecate, is_accelerate_available, logging
 from einops import rearrange
 from packaging import version
+from PIL import Image
 from tqdm import tqdm
 from transformers import CLIPTextModel, CLIPTokenizer
+
+from animatediff.utils.image_utils import preprocess_image
 
 from ..models.unet import UNet3DConditionModel
 
@@ -329,6 +332,7 @@ class AnimationPipeline(DiffusionPipeline):
 
     def prepare_latents(
         self,
+        init_image,
         batch_size,
         num_channels_latents,
         video_length,
@@ -346,28 +350,71 @@ class AnimationPipeline(DiffusionPipeline):
             height // self.vae_scale_factor,
             width // self.vae_scale_factor,
         )
+
+        if init_image:
+            image = Image.open(init_image)
+            image = preprocess_image(image)
+
+            supported_image_types = (torch.Tensor, Image.Image, list)
+            if not isinstance(image, supported_image_types):
+                raise ValueError(
+                    "The type of the image has to be one of "
+                    f"{supported_image_types} "
+                )
+
+            image = image.to(device=device, dtype=dtype)
+
+            if isinstance(generator, list):
+                init_latents = [
+                    self.vae.encode(image[idx : idx + 1]).latent_dist.sample(
+                        generator[idx]
+                    )
+                    for idx in range(batch_size)
+                ]
+                init_latents = torch.cat(init_latents, dim=0)
+            else:
+                init_latents = self.vae.encode(image).latent_dist.sample(generator)
+        else:
+            init_latents = None
+
         if isinstance(generator, list) and len(generator) != batch_size:
             raise ValueError(
                 f"You have passed a list of generators of length {len(generator)}, but requested an effective batch"
                 f" size of {batch_size}. Make sure the batch size matches the length of the generators."
             )
+
         if latents is None:
             rand_device = "cpu" if device.type == "mps" else device
 
             if isinstance(generator, list):
                 shape = shape
                 # shape = (1,) + shape[1:]
+                # ignore init latents for batch model
                 latents = [
                     torch.randn(
                         shape, generator=generator[i], device=rand_device, dtype=dtype
                     )
                     for i in range(batch_size)
                 ]
+
                 latents = torch.cat(latents, dim=0).to(device)
             else:
                 latents = torch.randn(
                     shape, generator=generator, device=rand_device, dtype=dtype
                 ).to(device)
+
+                if init_latents:
+                    for idx in range(video_length):
+                        # Gradually reduce init alpha along video frames
+                        init_alpha = (video_length - float(idx)) / video_length
+                        # TODO: magic constant here
+                        init_alpha = init_alpha / 30
+
+                        new_latent = init_latents * init_alpha
+                        new_latent += latents[:, :, idx, :, :] * (1 - init_alpha)
+
+                        latents[:, :, idx, :, :] = new_latent
+
         else:
             if latents.shape != shape:
                 raise ValueError(
@@ -376,7 +423,8 @@ class AnimationPipeline(DiffusionPipeline):
             latents = latents.to(device)
 
         # scale the initial noise by the standard deviation required by the scheduler
-        latents = latents * self.scheduler.init_noise_sigma
+        if not init_latents:
+            latents = latents * self.scheduler.init_noise_sigma
         return latents
 
     @torch.no_grad()
@@ -384,6 +432,7 @@ class AnimationPipeline(DiffusionPipeline):
         self,
         prompt: Union[str, List[str]],
         video_length: Optional[int],
+        init_image: Image.Image,
         height: Optional[int] = None,
         width: Optional[int] = None,
         num_inference_steps: int = 50,
@@ -443,6 +492,7 @@ class AnimationPipeline(DiffusionPipeline):
         # Prepare latent variables
         num_channels_latents = self.unet.in_channels
         latents = self.prepare_latents(
+            init_image,
             batch_size * num_videos_per_prompt,
             num_channels_latents,
             video_length,

@@ -115,6 +115,7 @@ def load_weights(
     dreambooth_model_path="",
     lora_model_path="",
     lora_alpha=0.8,
+    additional_networks=[],
 ):
     # 1.1 motion module
     unet_state_dict = {}
@@ -198,5 +199,18 @@ def load_weights(
         animation_pipeline = convert_motion_lora_ckpt_to_diffusers(
             animation_pipeline, motion_lora_state_dict, alpha
         )
+
+    # Additional networks
+    for additional_lora in additional_networks:
+        lora_path, lora_alpha = additional_lora.split(":")
+        lora_path = lora_path.strip()
+        lora_alpha = float(lora_alpha.strip())
+
+        print(f"Loading LoRA {lora_path} with weight {lora_alpha}")
+
+        state_dict = {}
+        with safe_open(lora_path, framework="pt", device="cpu") as fp:
+            for key in fp.keys():
+                state_dict[key] = fp.get_tensor(key)
 
     return animation_pipeline
